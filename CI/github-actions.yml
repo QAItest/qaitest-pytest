@@ -1,0 +1,120 @@
+name: bdd-tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      run_all:
+        description: Run all configured domains
+        required: false
+        default: "false"
+      run_domains:
+        description: Space-separated domain list
+        required: false
+        default: ""
+      run_ids:
+        description: Space-separated test IDs
+        required: false
+        default: ""
+      run_features:
+        description: Space-separated feature paths
+        required: false
+        default: ""
+      collect_only:
+        description: Collect tests without executing
+        required: false
+        default: "false"
+      keep_going:
+        description: Continue after a failing group
+        required: false
+        default: "true"
+  schedule:
+    - cron: "0 2 * * *"
+
+jobs:
+  bdd-tests:
+    runs-on: ubuntu-latest
+    env:
+      CUCUMBER_JSON_FILE: reports/cucumber.json
+      RUN_ALL: ${{ github.event.inputs.run_all || 'false' }}
+      RUN_DOMAINS: ${{ github.event.inputs.run_domains || '' }}
+      RUN_IDS: ${{ github.event.inputs.run_ids || '' }}
+      RUN_FEATURES: ${{ github.event.inputs.run_features || '' }}
+      COLLECT_ONLY: ${{ github.event.inputs.collect_only || 'false' }}
+      KEEP_GOING: ${{ github.event.inputs.keep_going || 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pytest pytest-bdd pyyaml
+
+      - name: Create reports directory
+        run: mkdir -p reports
+
+      - name: Run BDD tests
+        shell: bash
+        run: |
+          CMD="python tests/run_bdd.py --config framework.yaml"
+
+          [ "$RUN_ALL" = "true" ] && CMD="$CMD --all"
+          [ -n "$RUN_DOMAINS" ] && CMD="$CMD --domains $RUN_DOMAINS"
+          [ -n "$RUN_IDS" ] && CMD="$CMD --ids $RUN_IDS"
+          [ -n "$RUN_FEATURES" ] && CMD="$CMD --features $RUN_FEATURES"
+          [ "$COLLECT_ONLY" = "true" ] && CMD="$CMD --collect-only"
+          [ "$KEEP_GOING" = "true" ] && CMD="$CMD --keep-going"
+
+          CMD="$CMD --cucumberjson ${CUCUMBER_JSON_FILE}"
+
+          echo "Executing: $CMD"
+          eval "$CMD"
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bdd-reports
+          path: reports/
+
+  nightly-smoke:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pytest pytest-bdd pyyaml
+
+      - name: Run nightly smoke
+        run: |
+          mkdir -p reports
+          python tests/run_bdd.py --config framework.yaml --domains smoke --keep-going --cucumberjson reports/nightly_smoke.json
+
+      - name: Upload nightly reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-smoke-reports
+          path: reports/
