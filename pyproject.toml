@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qaitest-pytest"
+version = "0.1.0"
+description = "Reusable BDD QA automation toolkit for pytest-based test projects."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+  { name = "QAItest" }
+]
+dependencies = [
+  "PyYAML>=6.0",
+  "requests>=2.31.0",
+  "pytest>=7.0.0"
+]
+
+[project.optional-dependencies]
+aws = [
+  "boto3>=1.28.0"
+]
+bdd = [
+  "pytest-bdd>=7.0.0"
+]
+
+[project.scripts]
+test-bdd = "tests.run_bdd:main"
+test-export = "utils.export_test_xray:main"
+test-import = "utils.import_test_xray:main"
+test-sanitize = "utils.gherkin_sanitizer:main"
+
+[tool.setuptools.packages.find]
+include = ["tests", "tests.*", "utils", "utils.*"]
