@@ -1,0 +1,152 @@
+[
+  {
+    "keyword": "Feature",
+    "uri": "auth/TEST-101.feature",
+    "name": "User authentication",
+    "id": "auth/test-101.feature",
+    "line": 1,
+    "description": "",
+    "language": "en",
+    "tags": [
+      {
+        "name": "REQ-PRODUCT-001",
+        "line": 1
+      }
+    ],
+    "elements": [
+      {
+        "keyword": "Scenario",
+        "id": "successful_login_with_valid_credentials",
+        "name": "Successful login with valid credentials",
+        "line": 5,
+        "description": "",
+        "tags": [
+          {
+            "name": "TEST-101",
+            "line": 4
+          },
+          {
+            "name": "env_ui",
+            "line": 4
+          },
+          {
+            "name": "auth",
+            "line": 4
+          }
+        ],
+        "type": "scenario",
+        "steps": [
+          {
+            "keyword": "Given",
+            "name": "the user is on the login page",
+            "line": 6,
+            "match": {
+              "location": ""
+            },
+            "result": {
+              "status": "passed",
+              "duration": 2100000000
+            }
+          },
+          {
+            "keyword": "When",
+            "name": "the user submits valid credentials",
+            "line": 7,
+            "match": {
+              "location": ""
+            },
+            "result": {
+              "status": "passed",
+              "duration": 3400000000
+            }
+          },
+          {
+            "keyword": "Then",
+            "name": "the dashboard is displayed",
+            "line": 8,
+            "match": {
+              "location": ""
+            },
+            "result": {
+              "status": "passed",
+              "duration": 1800000000
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "keyword": "Feature",
+    "uri": "checkout/TEST-205.feature",
+    "name": "Checkout validation",
+    "id": "checkout/test-205.feature",
+    "line": 1,
+    "description": "",
+    "language": "en",
+    "tags": [],
+    "elements": [
+      {
+        "keyword": "Scenario",
+        "id": "payment_is_rejected_when_card_is_expired",
+        "name": "Payment is rejected when card is expired",
+        "line": 5,
+        "description": "",
+        "tags": [
+          {
+            "name": "TEST-205",
+            "line": 4
+          },
+          {
+            "name": "env_ui",
+            "line": 4
+          },
+          {
+            "name": "checkout",
+            "line": 4
+          }
+        ],
+        "type": "scenario",
+        "steps": [
+          {
+            "keyword": "Given",
+            "name": "the user has an item in the cart",
+            "line": 6,
+            "match": {
+              "location": ""
+            },
+            "result": {
+              "status": "passed",
+              "duration": 1900000000
+            }
+          },
+          {
+            "keyword": "When",
+            "name": "the user submits an expired card",
+            "line": 7,
+            "match": {
+              "location": ""
+            },
+            "result": {
+              "status": "failed",
+              "duration": 2500000000,
+              "error_message": "AssertionError: expected validation message 'Card expired' to be visible"
+            }
+          },
+          {
+            "keyword": "Then",
+            "name": "a payment error message is shown",
+            "line": 8,
+            "match": {
+              "location": ""
+            },
+            "result": {
+              "status": "skipped",
+              "duration": 0
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
