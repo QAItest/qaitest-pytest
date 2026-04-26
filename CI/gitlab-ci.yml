@@ -1,0 +1,86 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE =~ /^(web|push|merge_request_event)$/'
+      when: always
+    - when: never
+
+stages:
+  - test
+
+image: python:3.11
+
+variables:
+  CI: "true"
+  CUCUMBER_JSON_FILE: "reports/cucumber.json"
+  RUN_ALL: "false"
+  RUN_DOMAINS: ""
+  RUN_IDS: ""
+  RUN_FEATURES: ""
+  COLLECT_ONLY: "false"
+  KEEP_GOING: "true"
+  PYTEST_ARGS: ""
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .cache/pip
+
+default:
+  before_script:
+    - python --version
+    - pip install --upgrade pip
+    - pip install -e .
+    - pip install pytest pytest-bdd pyyaml
+    - mkdir -p reports
+
+bdd_tests:
+  stage: test
+  timeout: 2h
+  rules:
+    - if: '$CI_PIPELINE_SOURCE =~ /^(web|push|merge_request_event)$/'
+      when: on_success
+    - when: never
+  script:
+    - echo "Starting BDD test run"
+    - echo "RUN_DOMAINS=${RUN_DOMAINS:-<none>}"
+    - echo "RUN_IDS=${RUN_IDS:-<none>}"
+    - |
+      CMD="python tests/run_bdd.py --config framework.yaml"
+
+      [ "$RUN_ALL" = "true" ] && CMD="$CMD --all"
+      [ -n "$RUN_DOMAINS" ] && CMD="$CMD --domains $RUN_DOMAINS"
+      [ -n "$RUN_IDS" ] && CMD="$CMD --ids $RUN_IDS"
+      [ -n "$RUN_FEATURES" ] && CMD="$CMD --features $RUN_FEATURES"
+      [ "$COLLECT_ONLY" = "true" ] && CMD="$CMD --collect-only"
+      [ "$KEEP_GOING" = "true" ] && CMD="$CMD --keep-going"
+      [ -n "$PYTEST_ARGS" ] && CMD="$CMD $PYTEST_ARGS"
+
+      CMD="$CMD --cucumberjson ${CUCUMBER_JSON_FILE:-reports/cucumber.json}"
+
+      echo "Executing: $CMD"
+      eval "$CMD"
+  artifacts:
+    when: always
+    paths:
+      - reports/
+    expire_in: 1 week
+
+nightly_smoke:
+  stage: test
+  timeout: 2h
+  variables:
+    DOMAINS: "smoke"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: on_success
+    - when: never
+  script:
+    - echo "Running nightly smoke tests"
+    - python tests/run_bdd.py --config framework.yaml --domains $DOMAINS --keep-going --cucumberjson reports/nightly_smoke.json
+  artifacts:
+    when: always
+    paths:
+      - reports/
+    expire_in: 1 week
