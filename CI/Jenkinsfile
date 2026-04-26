@@ -1,0 +1,66 @@
+pipeline {
+    agent any
+
+    triggers {
+        cron('H 2 * * *')
+    }
+
+    parameters {
+        booleanParam(name: 'RUN_ALL', defaultValue: false, description: 'Run all configured domains')
+        string(name: 'RUN_DOMAINS', defaultValue: '', description: 'Space-separated domain list')
+        string(name: 'RUN_IDS', defaultValue: '', description: 'Space-separated test IDs')
+        string(name: 'RUN_FEATURES', defaultValue: '', description: 'Space-separated feature paths')
+        booleanParam(name: 'COLLECT_ONLY', defaultValue: false, description: 'Collect tests without executing them')
+        booleanParam(name: 'KEEP_GOING', defaultValue: true, description: 'Continue after a failing group')
+    }
+
+    environment {
+        CUCUMBER_JSON_FILE = 'reports/cucumber.json'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Setup Python') {
+            steps {
+                sh '''
+                    python3 --version
+                    python3 -m pip install --upgrade pip
+                    pip install -e .
+                    pip install pytest pytest-bdd pyyaml
+                    mkdir -p reports
+                '''
+            }
+        }
+
+        stage('Run BDD Tests') {
+            steps {
+                sh '''
+                    CMD="python3 tests/run_bdd.py --config framework.yaml"
+
+                    [ "$RUN_ALL" = "true" ] && CMD="$CMD --all"
+                    [ -n "$RUN_DOMAINS" ] && CMD="$CMD --domains $RUN_DOMAINS"
+                    [ -n "$RUN_IDS" ] && CMD="$CMD --ids $RUN_IDS"
+                    [ -n "$RUN_FEATURES" ] && CMD="$CMD --features $RUN_FEATURES"
+                    [ "$COLLECT_ONLY" = "true" ] && CMD="$CMD --collect-only"
+                    [ "$KEEP_GOING" = "true" ] && CMD="$CMD --keep-going"
+
+                    CMD="$CMD --cucumberjson ${CUCUMBER_JSON_FILE}"
+
+                    echo "Executing: $CMD"
+                    eval "$CMD"
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'reports/**', allowEmptyArchive: true
+        }
+    }
+}
