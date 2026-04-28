@@ -2,6 +2,11 @@
 
 Open-source QA automation framework for `pytest`, `pytest-bdd`, and Appium-style mobile or UI test projects.
 
+Recommended software combo:
+- `pytest` and `pytest-bdd` for executable tests
+- CI with GitLab CI, GitHub Actions, or Jenkins
+- `Xray for Jira` for test case traceability, execution history, and report publishing
+
 This repository is intentionally framework-first:
 - no internal infrastructure
 - no vendor-locked secrets flow
@@ -14,6 +19,7 @@ It keeps reusable ideas from real-world BDD automation projects:
 - optional domain-specific execution order
 - portable configuration files
 - reusable utility scripts for export, import, sanitization, and report enrichment
+- optional `Xray for Jira` integration without coupling the framework to a private setup
 
 ## What this repository provides
 
@@ -23,6 +29,18 @@ It keeps reusable ideas from real-world BDD automation projects:
 - Example report format: [reports/cucumber-report-example.json](C:/Users/g.prospa/Documents/Team_Software/QA/5-PROJ/qaitest-pytest/reports/cucumber-report-example.json)
 - A minimal feature example: [tests/features/example/TEST-101.feature](C:/Users/g.prospa/Documents/Team_Software/QA/5-PROJ/qaitest-pytest/tests/features/example/TEST-101.feature)
 - A matching step-definition example: [tests/steps/example/test_example_steps.py](C:/Users/g.prospa/Documents/Team_Software/QA/5-PROJ/qaitest-pytest/tests/steps/example/test_example_steps.py)
+
+## Recommended stack
+
+This repository works well as a generic BDD automation base, but its strongest reusable setup is:
+
+- author tests in `.feature` files and `pytest-bdd` step definitions
+- run selections from CI or local CLI with `test-bdd`
+- export or synchronize test assets with `Xray for Jira`
+- import Cucumber-style execution results back into `Xray for Jira`
+- keep artifacts and reports in `reports/` for traceability
+
+In other words, the framework stays open and reusable, while `Xray for Jira` becomes the recommended test management layer when a team wants governance, coverage, and execution visibility.
 
 ## Installation
 
@@ -149,13 +167,28 @@ The `utils/` folder keeps historically familiar filenames, but in a reusable for
 - [utils/aws.py](C:/Users/g.prospa/Documents/Team_Software/QA/5-PROJ/qaitest-pytest/utils/aws.py)
   Generic secret loading from env vars, files, or optional AWS fallback.
 - [utils/export_test_xray.py](C:/Users/g.prospa/Documents/Team_Software/QA/5-PROJ/qaitest-pytest/utils/export_test_xray.py)
-  Generic feature export with local or remote sources.
+  Generic feature export with local or remote sources, designed to fit `Xray for Jira` style workflows.
 - [utils/gherkin_sanitizer.py](C:/Users/g.prospa/Documents/Team_Software/QA/5-PROJ/qaitest-pytest/utils/gherkin_sanitizer.py)
   Generic Gherkin normalization and tag sanitization.
 - [utils/import_test_xray.py](C:/Users/g.prospa/Documents/Team_Software/QA/5-PROJ/qaitest-pytest/utils/import_test_xray.py)
-  Generic Cucumber report import and summary generation.
+  Generic Cucumber report import and summary generation for `Xray for Jira` oriented reporting flows.
 - [utils/xray.py](C:/Users/g.prospa/Documents/Team_Software/QA/5-PROJ/qaitest-pytest/utils/xray.py)
-  Generic helpers for labels, nodemap generation, failed-scenario extraction, and optional evidence handling.
+  Generic helpers for labels, nodemap generation, failed-scenario extraction, and optional evidence handling around `Xray for Jira`.
+
+## Xray for Jira
+
+`Xray for Jira` is the test-management combo highlighted by this repository.
+
+Typical usage:
+
+- keep business-readable test definitions in Gherkin
+- map scenario tags such as `@TEST-101` to managed test cases
+- export or synchronize feature assets
+- execute tests through `pytest` / `pytest-bdd`
+- publish Cucumber JSON or enriched execution metadata
+- attach failed artifacts or evidence when needed
+
+The framework does not require Jira to run. It is still perfectly usable as a standalone BDD runner. But if a team wants a well-known test management platform, the utilities in `utils/` are intentionally shaped to make `Xray for Jira` the easiest advanced integration path.
 
 ## Optional integrations
 
@@ -168,6 +201,8 @@ This framework does not require any particular external platform. If your team n
 - local evidence collection
 
 The framework itself stays independent of any private service.
+
+If your team already uses Jira, the recommended adapter path is `Xray for Jira`.
 
 ## CI examples
 
